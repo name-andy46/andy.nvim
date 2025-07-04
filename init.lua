@@ -176,6 +176,8 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<leader>w', '<cmd>:w<CR>', { desc = '[w] Save current buffer' })
 vim.keymap.set('i', 'jk', '<Esc>')
 vim.keymap.set('n', '<leader>x', '<cmd>:q<CR>', { desc = '[x] Kill focused buffer' })
+vim.keymap.set('n', '<leader>bj', '<cmd>:BufferLinePick<CR>', { desc = '[j] Jump to a buffer' })
+vim.keymap.set('n', '<leader>be', '<cmd>:BufferLinePickClose<CR>', { desc = '[e] Close a buffer' })
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
@@ -308,7 +310,7 @@ require('lazy').setup({
     opts = {
       -- delay between pressing a key and opening which-key (milliseconds)
       -- this setting is independent of vim.o.timeoutlen
-      delay = 0,
+      delay = 100,
       icons = {
         -- set icon mappings to true if you have a Nerd Font
         mappings = vim.g.have_nerd_font,
@@ -351,6 +353,7 @@ require('lazy').setup({
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>b', group = '[B]uffer' },
       },
     },
   },
