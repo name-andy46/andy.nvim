@@ -173,6 +173,9 @@ vim.o.confirm = true
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<leader>w', '<cmd>:w<CR>', { desc = '[w] Save current buffer' })
+vim.keymap.set('i', 'jk', '<Esc>')
+vim.keymap.set('n', '<leader>x', '<cmd>:q<CR>', { desc = '[x] Kill focused buffer' })
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
