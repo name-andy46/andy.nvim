@@ -178,8 +178,10 @@ vim.keymap.set('n', '<C-n>', '<cmd>ToggleTerm<CR>')
 vim.keymap.set('n', '<leader>w', '<cmd>:w<CR>', { desc = '[w] Save current buffer' })
 vim.keymap.set('i', 'jk', '<Esc>')
 vim.keymap.set('n', '<leader>x', '<cmd>:q<CR>', { desc = '[x] Kill focused buffer' })
-vim.keymap.set('n', '<leader>bj', '<cmd>:BufferLinePick<CR>', { desc = '[j] Jump to a buffer' })
-vim.keymap.set('n', '<leader>be', '<cmd>:BufferLinePickClose<CR>', { desc = '[e] Close a buffer' })
+vim.keymap.set('n', '<leader>bj', '<cmd>:BufferLinePick<CR>', { desc = '[J]ump to a buffer' })
+vim.keymap.set('n', '<leader>be', '<cmd>:BufferLinePickClose<CR>', { desc = 'Close/[E]xit a buffer' })
+vim.keymap.set('n', '<leader>bn', '<cmd>:bnext<CR>', { desc = 'Go to [N]ext buffer' })
+vim.keymap.set('n', '<leader>bp', '<cmd>:bprev<CR>', { desc = 'Go to [P]revious buffer' })
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
