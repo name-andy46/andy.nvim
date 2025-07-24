@@ -177,6 +177,13 @@ vim.keymap.set('n', '<leader><leader>x', '<cmd>source %<CR>')
 vim.keymap.set('n', '<C-n>', '<cmd>ToggleTerm<CR>')
 vim.keymap.set('n', '<leader>w', '<cmd>:w<CR>', { desc = '[w] Save current buffer' })
 vim.keymap.set('i', 'jk', '<Esc>')
+
+-- folding actions
+vim.keymap.set('n', '<leader>zi', '<cmd>:set foldmethod=indent<CR>', { desc = 'Set fold method as [I]ndent' })
+vim.keymap.set('n', '<leader>zm', '<cmd>:set foldmethod=manual<CR>', { desc = 'Set fold method as [M]anual' })
+vim.keymap.set('n', '<leader>zc', '<cmd>:set foldcolumn=1<CR>', { desc = 'Set fold [C]olumn to 1' })
+
+-- buffer navigation
 vim.keymap.set('n', '<leader>x', '<cmd>:q<CR>', { desc = '[x] Kill focused buffer' })
 vim.keymap.set('n', '<leader>bj', '<cmd>:BufferLinePick<CR>', { desc = '[J]ump to a buffer' })
 vim.keymap.set('n', '<leader>be', '<cmd>:BufferLinePickClose<CR>', { desc = 'Close/[E]xit a buffer' })
@@ -363,6 +370,7 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { '<leader>b', group = '[B]uffer' },
         { '<leader>r', group = '[R]equests' },
+        { '<leader>z', group = '[Z]Folds' },
       },
     },
   },
@@ -786,7 +794,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'isort', 'black', 'flake8' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
