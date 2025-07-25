@@ -198,6 +198,7 @@ vim.keymap.set('x', '<leader>dbe', '<ESC><CMD>lua require("psql").psql_run_visua
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>dq', vim.diagnostic.open_float, { desc = 'Show [D]iagnostic under the cursor' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
