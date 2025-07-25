@@ -375,6 +375,7 @@ require('lazy').setup({
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { '<leader>b', group = '[B]uffer' },
+        -- { '<leader>bd', group = '[D]ebug current [B]uffer' },
         { '<leader>r', group = '[R]equests' },
         { '<leader>db', group = '[D]bs' },
         { '<leader>z', group = '[Z]Folds' },
@@ -1006,7 +1007,7 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
