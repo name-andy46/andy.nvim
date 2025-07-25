@@ -190,6 +190,12 @@ vim.keymap.set('n', '<leader>be', '<cmd>:BufferLinePickClose<CR>', { desc = 'Clo
 vim.keymap.set('n', '<leader>bn', '<cmd>:bnext<CR>', { desc = 'Go to [N]ext buffer' })
 vim.keymap.set('n', '<leader>bp', '<cmd>:bprev<CR>', { desc = 'Go to [P]revious buffer' })
 
+-- this is for psql.nvim plugin database actions
+vim.keymap.set('n', '<leader>dbt', '<cmd>:PgTemp<CR>', { desc = 'Open [T]emporary sql buffer' })
+vim.keymap.set('n', '<leader>dbe', '<cmd>:PgRun<CR>', { desc = '[R]un current sql buffer' })
+-- not working!!!
+vim.keymap.set('x', '<leader>dbe', '<ESC><CMD>lua require("psql").psql_run_visual()<CR>', { desc = 'Execute selection with psql' })
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
@@ -370,6 +376,7 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { '<leader>b', group = '[B]uffer' },
         { '<leader>r', group = '[R]equests' },
+        { '<leader>db', group = '[D]bs' },
         { '<leader>z', group = '[Z]Folds' },
       },
     },
