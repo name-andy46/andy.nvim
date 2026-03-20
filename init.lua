@@ -548,20 +548,27 @@ require('lazy').setup({
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
-    dependencies = {
-      -- Automatically install LSPs and related tools to stdpath for Neovim
-      -- Mason must be loaded before its dependents so we need to set it up here.
-      -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { 'mason-org/mason.nvim', opts = {} },
-      { 'mason-org/mason-lspconfig.nvim', opts = {} },
-      'WhoIsSethDaniel/mason-tool-installer.nvim',
+    dependencies = vim.env.DEVCONTAINER
+        and {
+          -- In devcontainer: no Mason, just fidget and blink
+          { 'j-hui/fidget.nvim', opts = {} },
+          'saghen/blink.cmp',
+        }
+      or {
+        -- On host: full Mason setup
+        -- Automatically install LSPs and related tools to stdpath for Neovim
+        -- Mason must be loaded before its dependents so we need to set it up here.
+        -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
+        { 'mason-org/mason.nvim', opts = {} },
+        { 'mason-org/mason-lspconfig.nvim', opts = {} },
+        'WhoIsSethDaniel/mason-tool-installer.nvim',
 
-      -- Useful status updates for LSP.
-      { 'j-hui/fidget.nvim', opts = {} },
-
-      -- Allows extra capabilities provided by blink.cmp
-      'saghen/blink.cmp',
-    },
+        -- Useful status updates for LSP.
+        { 'j-hui/fidget.nvim', opts = {} },
+        --
+        -- Allows extra capabilities provided by blink.cmp
+        'saghen/blink.cmp',
+      },
     config = function()
       -- Brief aside: **What is LSP?**
       --
@@ -685,14 +692,17 @@ require('lazy').setup({
       --    :Mason
       --
       -- You can press `g?` for help in this menu.
-      local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, {
-        'lua_ls', -- Lua Language server
-        'stylua', -- Used to format Lua code
-        -- You can add other tools here that you want Mason to install
-      })
+      if not vim.env.DEVCONTAINER then
+        -- On host: use Mason to install and manage LSP servers
+        local ensure_installed = vim.tbl_keys(servers or {})
+        vim.list_extend(ensure_installed, {
+          'lua_ls', -- Lua Language server
+          'stylua', -- Used to format Lua code
+          -- You can add other tools here that you want Mason to install
+        })
 
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+        require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+      end
 
       for name, server in pairs(servers) do
         server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
@@ -700,32 +710,34 @@ require('lazy').setup({
         vim.lsp.enable(name)
       end
 
-      -- Special Lua Config, as recommended by neovim help docs
-      vim.lsp.config('lua_ls', {
-        on_init = function(client)
-          if client.workspace_folders then
-            local path = client.workspace_folders[1].name
-            if path ~= vim.fn.stdpath 'config' and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc')) then return end
-          end
+      if not vim.env.DEVCONTAINER then
+        -- Special Lua Config, as recommended by neovim help docs
+        vim.lsp.config('lua_ls', {
+          on_init = function(client)
+            if client.workspace_folders then
+              local path = client.workspace_folders[1].name
+              if path ~= vim.fn.stdpath 'config' and (vim.uv.fs_stat(path .. '/.luarc.json') or vim.uv.fs_stat(path .. '/.luarc.jsonc')) then return end
+            end
 
-          client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
-            runtime = {
-              version = 'LuaJIT',
-              path = { 'lua/?.lua', 'lua/?/init.lua' },
-            },
-            workspace = {
-              checkThirdParty = false,
-              -- NOTE: this is a lot slower and will cause issues when working on your own configuration.
-              --  See https://github.com/neovim/nvim-lspconfig/issues/3189
-              library = vim.api.nvim_get_runtime_file('', true),
-            },
-          })
-        end,
-        settings = {
-          Lua = {},
-        },
-      })
-      vim.lsp.enable 'lua_ls'
+            client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+              runtime = {
+                version = 'LuaJIT',
+                path = { 'lua/?.lua', 'lua/?/init.lua' },
+              },
+              workspace = {
+                checkThirdParty = false,
+                -- NOTE: this is a lot slower and will cause issues when working on your own configuration.
+                --  See https://github.com/neovim/nvim-lspconfig/issues/3189
+                library = vim.api.nvim_get_runtime_file('', true),
+              },
+            })
+          end,
+          settings = {
+            Lua = {},
+          },
+        })
+        vim.lsp.enable 'lua_ls'
+      end
     end,
   },
 
@@ -861,6 +873,8 @@ require('lazy').setup({
       signature = { enabled = true },
     },
   },
+  { 'catppuccin/nvim', name = 'catppuccin', priority = 1002 },
+  { 'Mofiqul/dracula.nvim', name = 'dracula', priority = 1001 },
 
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
@@ -880,7 +894,12 @@ require('lazy').setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+
+      if not vim.env.DEVCONTAINER then
+        vim.cmd.colorscheme 'tokyonight-night'
+      else
+        vim.cmd.colorscheme 'retrobox'
+      end
     end,
   },
 
@@ -930,7 +949,15 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     config = function()
       local filetypes = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'python' }
-      require('nvim-treesitter').install(filetypes)
+
+      if not vim.env.DEVCONTAINER then
+        require('nvim-treesitter').install(filetypes)
+      else
+        -- Add the runtime/ subdirectory to rtp so Neovim can find query files
+        local ts_path = vim.fn.stdpath 'data' .. '/lazy/nvim-treesitter/runtime'
+        vim.opt.rtp:prepend(ts_path)
+      end
+
       vim.api.nvim_create_autocmd('FileType', {
         pattern = filetypes,
         callback = function() vim.treesitter.start() end,
@@ -984,6 +1011,11 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
+  -- In devcontainer: plugins are already on disk via bind mount,
+  -- skip all git operations since GitHub is blocked by the firewall
+  git = vim.env.DEVCONTAINER and { enabled = false } or nil,
+  checker = vim.env.DEVCONTAINER and { enabled = false } or nil,
+  change_detection = vim.env.DEVCONTAINER and { enabled = false } or nil,
 })
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
