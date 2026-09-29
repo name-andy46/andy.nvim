@@ -780,17 +780,22 @@ require('lazy').setup({
         local disable_filetypes = { cpp = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then return nil end
 
-        -- Only autoformat C where the project declares its own style, i.e. ships
-        -- a `.clang-format`. Somewhere like the firmware repo, which declares
-        -- none, formatting on save would impose our style on code that predates
-        -- it -- a one-line edit rewrites ~40% of the file. There, format just the
-        -- lines you touched: visual-select them and hit <leader>f.
-        --  `stop` is exclusive, so the global ~/.clang-format fallback does not
-        --  count as a declaration -- it only backs the manual <leader>f.
-        if vim.bo[bufnr].filetype == 'c' then
+        -- Only autoformat where the project declares its own style, by shipping the
+        -- file below. A repo that declares nothing gets left alone: formatting it
+        -- would impose our style on code that predates it.
+        -- Format just the lines you touched there: visual-select them
+        -- and hit <leader>f, which skips this gate. `stop` is exclusive,
+        -- so a marker sitting directly in $HOME (the global
+        --  ~/.clang-format) does not count as a declaration -- it only backs <leader>f.
+        local style_marker = {
+          c = '.clang-format',
+          python = 'pyproject.toml',
+        }
+        local marker = style_marker[vim.bo[bufnr].filetype]
+        if marker then
           local path = vim.api.nvim_buf_get_name(bufnr)
           if path == '' then return nil end
-          local declared = vim.fs.find('.clang-format', {
+          local declared = vim.fs.find(marker, {
             path = vim.fs.dirname(path),
             upward = true,
             stop = vim.env.HOME,
@@ -806,9 +811,10 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         c = { 'clang-format' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { 'isort', 'black', 'flake8' },
-        python = { 'black' },
+        -- Conform runs these sequentially, so isort must come before black.
+        -- Both resolve off PATH, i.e. from the venv active when nvim launched --
+        -- the same binaries `requirements/lint.txt` pins for pre-commit.
+        python = { 'isort', 'black' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
