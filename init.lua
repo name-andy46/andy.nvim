@@ -260,6 +260,23 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- Use `:make` + quickfix for C. Falls back to a direct gcc invocation when the
+-- buffer's directory has no Makefile, so single-file exercises work too.
+--  `:make` builds, `:copen`/`]q` walk the errors. See `:help quickfix`.
+vim.api.nvim_create_autocmd('FileType', {
+  desc = 'Set makeprg for C buffers',
+  pattern = 'c',
+  group = vim.api.nvim_create_augroup('c-makeprg', { clear = true }),
+  callback = function(event)
+    local dir = vim.fn.fnamemodify(event.match ~= '' and vim.api.nvim_buf_get_name(event.buf) or '', ':h')
+    if vim.fn.filereadable(dir .. '/Makefile') == 1 or vim.fn.filereadable(dir .. '/makefile') == 1 then
+      vim.bo[event.buf].makeprg = 'make'
+    else
+      vim.bo[event.buf].makeprg = 'gcc -std=c11 -Wall -Wextra -g -o %:r %'
+    end
+  end,
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -673,7 +690,7 @@ require('lazy').setup({
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --  See `:help lsp-config` for information about keys and how to configure
       local servers = {
-        -- clangd = {},
+        clangd = {},
         -- gopls = {},
         pyright = {},
         -- rust_analyzer = {},
@@ -698,6 +715,7 @@ require('lazy').setup({
         vim.list_extend(ensure_installed, {
           'lua_ls', -- Lua Language server
           'stylua', -- Used to format Lua code
+          'clang-format', -- Used to format C code
           -- You can add other tools here that you want Mason to install
         })
 
@@ -759,20 +777,38 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        else
-          return {
-            timeout_ms = 500,
-            lsp_format = 'fallback',
-          }
+        local disable_filetypes = { cpp = true }
+        if disable_filetypes[vim.bo[bufnr].filetype] then return nil end
+
+        -- Only autoformat C where the project declares its own style, i.e. ships
+        -- a `.clang-format`. Somewhere like the firmware repo, which declares
+        -- none, formatting on save would impose our style on code that predates
+        -- it -- a one-line edit rewrites ~40% of the file. There, format just the
+        -- lines you touched: visual-select them and hit <leader>f.
+        --  `stop` is exclusive, so the global ~/.clang-format fallback does not
+        --  count as a declaration -- it only backs the manual <leader>f.
+        if vim.bo[bufnr].filetype == 'c' then
+          local path = vim.api.nvim_buf_get_name(bufnr)
+          if path == '' then return nil end
+          local declared = vim.fs.find('.clang-format', {
+            path = vim.fs.dirname(path),
+            upward = true,
+            stop = vim.env.HOME,
+          })[1]
+          if not declared then return nil end
         end
+
+        return {
+          timeout_ms = 500,
+          lsp_format = 'fallback',
+        }
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        c = { 'clang-format' },
         -- Conform can also run multiple formatters sequentially
-        python = { 'isort', 'black', 'flake8' },
+        -- python = { 'isort', 'black', 'flake8' },
+        python = { 'black' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
