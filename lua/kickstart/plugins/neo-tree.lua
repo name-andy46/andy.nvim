@@ -20,6 +20,12 @@ return {
           ['\\'] = 'close_window',
         },
       },
+      filtered_items = {
+        hide_gitignored = true,
+        always_show = {
+          'notes',
+        },
+      },
     },
   },
 }
