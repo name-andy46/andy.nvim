@@ -194,6 +194,40 @@ vim.keymap.set('n', '<leader>dbe', '<cmd>:PgRun<CR>', { desc = '[R]un current sq
 -- not working!!!
 vim.keymap.set('x', '<leader>dbe', '<ESC><CMD>lua require("psql").psql_run_visual()<CR>', { desc = 'Execute selection with psql' })
 
+-- `<leader>ls` runs flake8 over the files you have STAGED and loads the results
+-- into the quickfix list, so `]q` walks your own violations. Staged-only on
+-- purpose: `flake8 .` on cloudv2_service_devices returns ~690 findings, almost
+-- none of them yours. This is the same scope the pre-commit hook uses.
+local function lint_staged()
+  if vim.fn.executable 'flake8' == 0 then return vim.notify('flake8 not on PATH -- is the venv active?', vim.log.levels.WARN) end
+
+  local root = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
+  if vim.v.shell_error ~= 0 or not root or root == '' then return vim.notify('Not inside a git repository', vim.log.levels.WARN) end
+
+  local files = {}
+  for _, f in ipairs(vim.fn.systemlist { 'git', '-C', root, 'diff', '--cached', '--name-only', '--diff-filter=ACM' }) do
+    -- Absolute paths, so quickfix resolves them whatever nvim's cwd is.
+    if f:match '%.py$' then table.insert(files, root .. '/' .. f) end
+  end
+  if #files == 0 then return vim.notify('No staged Python files', vim.log.levels.INFO) end
+
+  local cmd = { 'flake8' }
+  vim.list_extend(cmd, files)
+  -- cwd = repo root so flake8 finds the project's own `.flake8`.
+  local res = vim.system(cmd, { cwd = root, text = true }):wait()
+  local lines = vim.split((res.stdout or '') .. (res.stderr or ''), '\n', { trimempty = true })
+
+  vim.fn.setqflist({}, ' ', { title = 'flake8 (staged)', lines = lines, efm = '%f:%l:%c: %m' })
+  if #lines == 0 then
+    vim.cmd.cclose()
+    vim.notify(('flake8 clean -- %d staged file(s)'):format(#files), vim.log.levels.INFO)
+  else
+    vim.cmd.copen()
+  end
+end
+
+vim.keymap.set('n', '<leader>ls', lint_staged, { desc = '[L]int [S]taged Python (flake8 -> quickfix)' })
+
 -- Diagnostic Config & Keymaps
 -- See :help vim.diagnostic.Opts
 vim.diagnostic.config {
@@ -1018,7 +1052,7 @@ require('lazy').setup({
   --
   require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps

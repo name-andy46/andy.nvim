@@ -8,8 +8,9 @@ A personal Neovim configuration forked from [kickstart.nvim](https://github.com/
 (origin: `name-andy46/andy.nvim`, upstream kickstart merged in periodically on `andy-dev`).
 It lives at `~/.config/nvim`, so editing files here changes the editor immediately — there is no build step.
 `README.md` and `doc/kickstart.txt` are upstream kickstart documentation, not documentation of this fork.
-`C-GUIDE.md` **is** local: the C workflow (formatting rule, `:make`/quickfix, clangd keymaps, gdb) —
-read it before answering anything about writing C here.
+`C-GUIDE.md` and `PYTHON-GUIDE.md` **are** local: the per-language workflows (the shared
+format-on-save gate, build/lint commands, LSP keymaps, debugging) — read the relevant one before
+answering anything about writing C or Python here.
 
 ## Commands
 
@@ -61,10 +62,16 @@ Any new plugin that downloads a binary, clones a repo, or depends on Mason needs
 - LSP servers are declared in the `servers` table (~line 692) and enabled with `vim.lsp.config` /
   `vim.lsp.enable` (new-style API, not `lspconfig.setup`). Currently `pyright` and `clangd`, plus
   host-only `lua_ls`. Mason's `ensure_installed` is derived from this table, so adding a key installs it.
-- Formatting is conform.nvim with format-on-save (`lua = stylua`, `python = black`,
-  `c = clang-format`; `cpp` disabled). **C is gated**: `format_on_save` only formats C when the project
-  ships its own `.clang-format` (upward search stopping before `$HOME`, so the global `~/.clang-format`
-  does not count). Repos that declare no style — the firmware repo — are left alone on save; `<leader>f`
-  still formats a visual selection. Don't "fix" this by removing the gate; see `C-GUIDE.md`.
+- Formatting is conform.nvim with format-on-save (`lua = stylua`, `python = isort` then `black`,
+  `c = clang-format`; `cpp` disabled). **C and Python are gated** by the `style_marker` table in
+  `format_on_save`: they only format when the project declares a style — `.clang-format` for C,
+  `pyproject.toml` for Python — found by an upward search stopping before `$HOME`, so a marker in
+  `$HOME` doesn't count. Repos declaring no style (the firmware repo; `cloudv2_service_triggers`) are
+  left alone on save; `<leader>f` still formats a visual selection. Don't "fix" this by removing the
+  gate; see `C-GUIDE.md` / `PYTHON-GUIDE.md`.
+- Python tooling (isort/black/flake8/debugpy) resolves off `PATH`, i.e. from the venv active when nvim
+  launched — deliberately, so it matches what the repo pins for pre-commit. Nothing auto-detects venvs.
+- Linting is nvim-lint (`lua/kickstart/plugins/lint.lua`, enabled): `python = { 'flake8' }`, guarded to
+  stay silent when the binary isn't on `PATH`. `<leader>ls` lints staged files into quickfix.
 - `lazy-lock.json` is committed **despite being listed in `.gitignore`** (inherited from upstream) — it is
   tracked, so plugin updates produce a lock diff that should be committed with them.

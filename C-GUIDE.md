@@ -3,7 +3,7 @@
 Everything C-specific this config does, and how to drive it.
 Read it in nvim (`:e C-GUIDE.md`) — markview.nvim renders it.
 
-Leader is `<Space>` throughout.
+Leader is `<Space>` throughout. See `PYTHON-GUIDE.md` for the Python equivalent.
 
 ---
 
@@ -12,6 +12,9 @@ Leader is `<Space>` throughout.
 ### The rule
 
 **C formats on save only when the project ships its own `.clang-format`.**
+
+This is one half of a general rule — Python works the same way, keyed on
+`pyproject.toml` instead. See `PYTHON-GUIDE.md`.
 
 On save, conform walks up from the file's directory looking for a `.clang-format`,
 stopping *just before* `$HOME`. Found one → format. Found none → the file is written
